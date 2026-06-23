@@ -1,7 +1,9 @@
 -- ============================================================
---                    BLOX FRUIT SIMPLE HUB v2.5
---          Sửa nút đóng: "X" và "−" đều thu nhỏ, có TMS
+--              BLOX FRUIT SIMPLE HUB v2.6 (FIX LỖI)
+--   Đảm bảo menu hiển thị, toggle hoạt động, có nút TMS
 -- ============================================================
+
+print("🚀 Đang khởi tạo Blox Fruit Hub...")
 
 -- Khai báo dịch vụ
 local CoreGui = game:GetService("CoreGui")
@@ -16,15 +18,17 @@ local Humanoid = Character:WaitForChild("Humanoid")
 -- Xóa menu cũ
 if CoreGui:FindFirstChild("BloxFruitSimpleHub") then
     CoreGui:FindFirstChild("BloxFruitSimpleHub"):Destroy()
+    print("🗑️ Đã xóa menu cũ")
 end
 
 -- ============================================================
---                    GIAO DIỆN CHÍNH
+--                    TẠO GUI
 -- ============================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BloxFruitSimpleHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
+print("✅ Đã tạo ScreenGui")
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
@@ -35,21 +39,11 @@ MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
+print("✅ Đã tạo MainFrame")
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = MainFrame
-
--- Shadow
-local Shadow = Instance.new("ImageLabel")
-Shadow.Size = UDim2.new(1, 20, 1, 20)
-Shadow.Position = UDim2.new(0, -10, 0, -10)
-Shadow.BackgroundTransparency = 1
-Shadow.Image = "rbxassetid://1316045270"
-Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-Shadow.ImageTransparency = 0.6
-Shadow.ZIndex = 0
-Shadow.Parent = MainFrame
 
 -- Title Bar
 local TitleBar = Instance.new("Frame")
@@ -73,7 +67,7 @@ TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = TitleBar
 
--- Nút thu nhỏ (dấu trừ)
+-- Nút thu nhỏ
 local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 30, 0, 30)
 MinBtn.Position = UDim2.new(1, -65, 0.5, -15)
@@ -88,7 +82,7 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(0, 6)
 MinCorner.Parent = MinBtn
 
--- Nút đóng (X) – giờ cũng chỉ thu nhỏ, không hủy
+-- Nút đóng (X) – giờ cũng thu nhỏ, không hủy
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -30, 0.5, -15)
@@ -119,7 +113,7 @@ local LevelLabel = Instance.new("TextLabel")
 LevelLabel.Size = UDim2.new(0.5, -10, 1, 0)
 LevelLabel.Position = UDim2.new(0, 10, 0, 0)
 LevelLabel.BackgroundTransparency = 1
-LevelLabel.Text = "Level: 0"
+LevelLabel.Text = "Level: ?"
 LevelLabel.TextColor3 = Color3.fromRGB(255, 220, 100)
 LevelLabel.TextSize = 16
 LevelLabel.Font = Enum.Font.GothamBold
@@ -130,14 +124,14 @@ local ExpLabel = Instance.new("TextLabel")
 ExpLabel.Size = UDim2.new(0.5, -10, 1, 0)
 ExpLabel.Position = UDim2.new(0.5, 0, 0, 0)
 ExpLabel.BackgroundTransparency = 1
-ExpLabel.Text = "EXP: 0%"
+ExpLabel.Text = "EXP: ?"
 ExpLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
 ExpLabel.TextSize = 16
 ExpLabel.Font = Enum.Font.GothamBold
 ExpLabel.TextXAlignment = Enum.TextXAlignment.Right
 ExpLabel.Parent = InfoFrame
 
--- Container
+-- Container (ScrollingFrame)
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -20, 1, -135)
 Container.Position = UDim2.new(0, 10, 0, 130)
@@ -146,6 +140,7 @@ Container.BorderSizePixel = 0
 Container.ScrollBarThickness = 4
 Container.CanvasSize = UDim2.new(0, 0, 0, 0)
 Container.Parent = MainFrame
+print("✅ Đã tạo Container")
 
 local Layout = Instance.new("UIListLayout")
 Layout.Parent = Container
@@ -153,7 +148,7 @@ Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0, 8)
 
 -- ============================================================
---                    NÚT THU NHỎ (TMS) – Dạng tròn
+--                    NÚT THU NHỎ (TMS)
 -- ============================================================
 local ToggleMenuButton = Instance.new("Frame")
 ToggleMenuButton.Name = "ToggleMenuButton"
@@ -162,8 +157,9 @@ ToggleMenuButton.Position = UDim2.new(1, -65, 1, -65)
 ToggleMenuButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleMenuButton.BorderSizePixel = 0
 ToggleMenuButton.Visible = false
-ToggleMenuButton.ZIndex = 999  -- luôn nổi trên cùng
+ToggleMenuButton.ZIndex = 999
 ToggleMenuButton.Parent = ScreenGui
+print("✅ Đã tạo nút TMS")
 
 local ToggleCorner = Instance.new("UICorner")
 ToggleCorner.CornerRadius = UDim.new(1, 0)
@@ -181,7 +177,6 @@ ToggleLabel.Parent = ToggleMenuButton
 -- Kéo thả nút tròn
 local dragging = false
 local dragStart, startPos
-
 ToggleMenuButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
@@ -189,7 +184,6 @@ ToggleMenuButton.InputBegan:Connect(function(input)
         startPos = ToggleMenuButton.Position
     end
 end)
-
 ToggleMenuButton.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
@@ -201,7 +195,6 @@ ToggleMenuButton.InputChanged:Connect(function(input)
         )
     end
 end)
-
 ToggleMenuButton.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
@@ -212,6 +205,7 @@ end)
 ToggleMenuButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = true
     ToggleMenuButton.Visible = false
+    print("🔄 Mở menu từ nút TMS")
 end)
 
 -- ============================================================
@@ -220,11 +214,13 @@ end)
 local function MinimizeMenu()
     MainFrame.Visible = false
     ToggleMenuButton.Visible = true
+    print("📉 Thu nhỏ menu")
 end
 
 local function RestoreMenu()
     MainFrame.Visible = true
     ToggleMenuButton.Visible = false
+    print("📈 Mở menu")
 end
 
 -- ============================================================
@@ -321,23 +317,25 @@ local function CreateButton(text, callback)
 end
 
 -- ============================================================
---                    CẬP NHẬT THÔNG TIN
+--                    CẬP NHẬT THÔNG TIN (nếu có dữ liệu)
 -- ============================================================
-local function UpdatePlayerInfo()
-    pcall(function()
-        local level = LocalPlayer.Data.Level.Value
-        local exp = LocalPlayer.Data.Exp.Value
-        local maxExp = LocalPlayer.Data.Exp.Max.Value or 100
-        local percent = math.floor((exp / maxExp) * 100)
-        LevelLabel.Text = "Level: " .. tostring(level)
-        ExpLabel.Text = "EXP: " .. tostring(percent) .. "%"
-    end)
-end
-
 spawn(function()
     while true do
         task.wait(2)
-        UpdatePlayerInfo()
+        pcall(function()
+            if LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Level") then
+                local level = LocalPlayer.Data.Level.Value
+                local exp = LocalPlayer.Data.Exp.Value
+                local maxExp = LocalPlayer.Data.Exp.Max.Value or 100
+                local percent = math.floor((exp / maxExp) * 100)
+                LevelLabel.Text = "Level: " .. tostring(level)
+                ExpLabel.Text = "EXP: " .. tostring(percent) .. "%"
+            else
+                -- Nếu không có dữ liệu, hiển thị mặc định
+                LevelLabel.Text = "Level: ?"
+                ExpLabel.Text = "EXP: ?"
+            end
+        end)
     end
 end)
 
@@ -363,7 +361,7 @@ local function GetMobForLevel(level)
 end
 
 -- ============================================================
---                    TÌM QUÁI NHANH
+--                    TÌM QUÁI
 -- ============================================================
 local function FindNearestMob(mobName)
     local nearest = nil
@@ -406,18 +404,17 @@ CreateToggle("⚔ Auto Farm (siêu nhanh)", "AutoFarm", function(enabled)
                             tool:Activate()
                         end
 
-                        -- Thử các remote
-                        for _, name in ipairs({"Remote", "CommF_", "Attack", "Remotes"}) do
-                            local obj = ReplicatedStorage:FindFirstChild(name)
-                            if obj then
-                                if obj:IsA("RemoteEvent") then obj:FireServer("Attack") end
-                                if obj:IsA("RemoteFunction") then obj:InvokeServer("Attack") end
-                                if obj:IsA("Folder") then
-                                    local atk = obj:FindFirstChild("Attack")
-                                    if atk and atk:IsA("RemoteEvent") then atk:FireServer() end
-                                end
+                        -- Thử remote (bỏ qua lỗi)
+                        pcall(function()
+                            local comm = ReplicatedStorage:FindFirstChild("CommF_")
+                            if comm and comm:IsA("RemoteFunction") then
+                                comm:InvokeServer("Attack")
                             end
-                        end
+                            local remote = ReplicatedStorage:FindFirstChild("Remote")
+                            if remote and remote:IsA("RemoteEvent") then
+                                remote:FireServer("Attack")
+                            end
+                        end)
                     end
                 end)
             end
@@ -436,12 +433,9 @@ CreateToggle("📜 Auto Quest", "AutoQuest", function(enabled)
                 pcall(function()
                     local level = LocalPlayer.Data.Level.Value
                     local questName = GetMobForLevel(level) .. "Quest"
-                    if not LocalPlayer.PlayerGui:FindFirstChild("Main") or not LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") or not LocalPlayer.PlayerGui.Main.Quest.Visible then
-                        local args = {"StartQuest", questName, 1}
-                        local comm = ReplicatedStorage:FindFirstChild("CommF_")
-                        if comm and comm:IsA("RemoteFunction") then
-                            comm:InvokeServer(unpack(args))
-                        end
+                    local comm = ReplicatedStorage:FindFirstChild("CommF_")
+                    if comm and comm:IsA("RemoteFunction") then
+                        comm:InvokeServer("StartQuest", questName, 1)
                     end
                 end)
             end
@@ -505,13 +499,14 @@ end)
 -- ============================================================
 CreateButton("🚪 Thoát (đóng hẳn)", function()
     ScreenGui:Destroy()
+    print("👋 Đã đóng GUI")
 end)
 
 -- ============================================================
 --                    GÁN SỰ KIỆN CHO NÚT THU NHỎ
 -- ============================================================
 MinBtn.MouseButton1Click:Connect(MinimizeMenu)
-CloseBtn.MouseButton1Click:Connect(MinimizeMenu)  -- giờ "X" cũng thu nhỏ
+CloseBtn.MouseButton1Click:Connect(MinimizeMenu)
 
 -- Hover effect
 local function AddHoverEffect(button, color1, color2)
@@ -525,9 +520,10 @@ end
 AddHoverEffect(MinBtn, Color3.fromRGB(60, 60, 80), Color3.fromRGB(80, 80, 100))
 AddHoverEffect(CloseBtn, Color3.fromRGB(200, 50, 50), Color3.fromRGB(230, 70, 70))
 
--- Canvas size
+-- Cập nhật CanvasSize
 Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     Container.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
 end)
 
-print("🚀 Blox Fruit Simple Hub v2.5 – Đã sửa lỗi đóng, có TMS!")
+print("🎉 Blox Fruit Simple Hub v2.6 đã sẵn sàng!")
+print("👉 Nếu menu không hiện, hãy mở console (F9) xem có lỗi gì không.")
