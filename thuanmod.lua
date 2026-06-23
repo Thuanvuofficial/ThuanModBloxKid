@@ -1,6 +1,6 @@
 -- ============================================================
---                    BLOX FRUIT SIMPLE HUB v2.4
---                Thêm nút TMS thu nhỏ, kéo thả
+--                    BLOX FRUIT SIMPLE HUB v2.5
+--          Sửa nút đóng: "X" và "−" đều thu nhỏ, có TMS
 -- ============================================================
 
 -- Khai báo dịch vụ
@@ -8,7 +8,6 @@ local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -64,7 +63,7 @@ TitleCorner.CornerRadius = UDim.new(0, 12)
 TitleCorner.Parent = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -50, 1, 0)
+TitleLabel.Size = UDim2.new(1, -70, 1, 0)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Text = "⚔ BLOX FRUIT HUB"
@@ -74,6 +73,7 @@ TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = TitleBar
 
+-- Nút thu nhỏ (dấu trừ)
 local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 30, 0, 30)
 MinBtn.Position = UDim2.new(1, -65, 0.5, -15)
@@ -88,6 +88,7 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(0, 6)
 MinCorner.Parent = MinBtn
 
+-- Nút đóng (X) – giờ cũng chỉ thu nhỏ, không hủy
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -30, 0.5, -15)
@@ -152,7 +153,7 @@ Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0, 8)
 
 -- ============================================================
---                    NÚT THU NHỎ (TMS)
+--                    NÚT THU NHỎ (TMS) – Dạng tròn
 -- ============================================================
 local ToggleMenuButton = Instance.new("Frame")
 ToggleMenuButton.Name = "ToggleMenuButton"
@@ -161,10 +162,11 @@ ToggleMenuButton.Position = UDim2.new(1, -65, 1, -65)
 ToggleMenuButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleMenuButton.BorderSizePixel = 0
 ToggleMenuButton.Visible = false
+ToggleMenuButton.ZIndex = 999  -- luôn nổi trên cùng
 ToggleMenuButton.Parent = ScreenGui
 
 local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(1, 0)  -- bo tròn hoàn toàn
+ToggleCorner.CornerRadius = UDim.new(1, 0)
 ToggleCorner.Parent = ToggleMenuButton
 
 local ToggleLabel = Instance.new("TextLabel")
@@ -176,7 +178,7 @@ ToggleLabel.TextSize = 18
 ToggleLabel.Font = Enum.Font.GothamBold
 ToggleLabel.Parent = ToggleMenuButton
 
--- Cho phép kéo thả nút tròn
+-- Kéo thả nút tròn
 local dragging = false
 local dragStart, startPos
 
@@ -206,11 +208,24 @@ ToggleMenuButton.InputEnded:Connect(function(input)
     end
 end)
 
--- Khi ấn nút tròn thì mở menu và ẩn nút
+-- Mở menu khi ấn nút tròn
 ToggleMenuButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = true
     ToggleMenuButton.Visible = false
 end)
+
+-- ============================================================
+--                    HÀM THU NHỎ / MỞ MENU
+-- ============================================================
+local function MinimizeMenu()
+    MainFrame.Visible = false
+    ToggleMenuButton.Visible = true
+end
+
+local function RestoreMenu()
+    MainFrame.Visible = true
+    ToggleMenuButton.Visible = false
+end
 
 -- ============================================================
 --                    TRẠNG THÁI
@@ -368,7 +383,7 @@ local function FindNearestMob(mobName)
 end
 
 -- ============================================================
---                    AUTO FARM – ĐÁNH LIÊN TỤC
+--                    AUTO FARM
 -- ============================================================
 CreateToggle("⚔ Auto Farm (siêu nhanh)", "AutoFarm", function(enabled)
     if enabled then
@@ -382,8 +397,7 @@ CreateToggle("⚔ Auto Farm (siêu nhanh)", "AutoFarm", function(enabled)
                     if target and Character and Character:FindFirstChild("HumanoidRootPart") then
                         local root = Character.HumanoidRootPart
                         local targetPos = target.HumanoidRootPart.Position
-                        local flyPos = targetPos + Vector3.new(0, 2, 0)
-                        root.CFrame = CFrame.new(flyPos, targetPos)
+                        root.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0), targetPos)
                         root.Velocity = Vector3.new(0, 0, 0)
 
                         local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool") or Character:FindFirstChildOfClass("Tool")
@@ -392,20 +406,17 @@ CreateToggle("⚔ Auto Farm (siêu nhanh)", "AutoFarm", function(enabled)
                             tool:Activate()
                         end
 
-                        -- Gửi remote tấn công
-                        local remote = ReplicatedStorage:FindFirstChild("Remote")
-                        if remote then remote:FireServer("Attack") end
-
-                        local comm = ReplicatedStorage:FindFirstChild("CommF_")
-                        if comm then comm:InvokeServer("Attack") end
-
-                        local attackEvent = ReplicatedStorage:FindFirstChild("Attack")
-                        if attackEvent then attackEvent:FireServer() end
-
-                        local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-                        if remotes then
-                            local attack = remotes:FindFirstChild("Attack")
-                            if attack then attack:FireServer() end
+                        -- Thử các remote
+                        for _, name in ipairs({"Remote", "CommF_", "Attack", "Remotes"}) do
+                            local obj = ReplicatedStorage:FindFirstChild(name)
+                            if obj then
+                                if obj:IsA("RemoteEvent") then obj:FireServer("Attack") end
+                                if obj:IsA("RemoteFunction") then obj:InvokeServer("Attack") end
+                                if obj:IsA("Folder") then
+                                    local atk = obj:FindFirstChild("Attack")
+                                    if atk and atk:IsA("RemoteEvent") then atk:FireServer() end
+                                end
+                            end
                         end
                     end
                 end)
@@ -427,7 +438,10 @@ CreateToggle("📜 Auto Quest", "AutoQuest", function(enabled)
                     local questName = GetMobForLevel(level) .. "Quest"
                     if not LocalPlayer.PlayerGui:FindFirstChild("Main") or not LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") or not LocalPlayer.PlayerGui.Main.Quest.Visible then
                         local args = {"StartQuest", questName, 1}
-                        ReplicatedStorage.Remotes.CommF_:InvokeServer(unpack(args))
+                        local comm = ReplicatedStorage:FindFirstChild("CommF_")
+                        if comm and comm:IsA("RemoteFunction") then
+                            comm:InvokeServer(unpack(args))
+                        end
                     end
                 end)
             end
@@ -436,7 +450,7 @@ CreateToggle("📜 Auto Quest", "AutoQuest", function(enabled)
 end)
 
 -- ============================================================
---                    BRING MOBS + NÂNG LÊN
+--                    BRING MOBS
 -- ============================================================
 CreateToggle("🧲 Gom Quái (nâng lên)", "BringMob", function(enabled)
     if enabled then
@@ -455,8 +469,7 @@ CreateToggle("🧲 Gom Quái (nâng lên)", "BringMob", function(enabled)
                         local basePos = firstMob.HumanoidRootPart.Position
                         for _, mob in pairs(workspace.Enemies:GetChildren()) do
                             if mob.Name == firstMob.Name and mob ~= firstMob and mob:FindFirstChild("HumanoidRootPart") then
-                                local newPos = basePos + Vector3.new(0, 8, 0)
-                                mob.HumanoidRootPart.CFrame = CFrame.new(newPos)
+                                mob.HumanoidRootPart.CFrame = CFrame.new(basePos + Vector3.new(0, 8, 0))
                                 mob.HumanoidRootPart.CanCollide = false
                                 mob.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
                             end
@@ -469,7 +482,7 @@ CreateToggle("🧲 Gom Quái (nâng lên)", "BringMob", function(enabled)
 end)
 
 -- ============================================================
---                    TELEPORT ĐẢO
+--                    TELEPORT
 -- ============================================================
 CreateButton("🚀 Teleport Đảo Phù Hợp", function()
     pcall(function()
@@ -480,23 +493,27 @@ CreateButton("🚀 Teleport Đảo Phù Hợp", function()
         elseif level <= 40 then islandName = "Ice Island"
         elseif level <= 60 then islandName = "Dragon Island"
         else islandName = "Dark Island" end
-        ReplicatedStorage.Remotes.CommF_:InvokeServer("TeleportToIsland", islandName)
+        local comm = ReplicatedStorage:FindFirstChild("CommF_")
+        if comm and comm:IsA("RemoteFunction") then
+            comm:InvokeServer("TeleportToIsland", islandName)
+        end
     end)
 end)
 
 -- ============================================================
---                    ĐÓNG / THU NHỎ
+--                    NÚT THOÁT (ĐÓNG HẲN GUI)
 -- ============================================================
-MinBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    ToggleMenuButton.Visible = true
-end)
-
-CloseBtn.MouseButton1Click:Connect(function()
+CreateButton("🚪 Thoát (đóng hẳn)", function()
     ScreenGui:Destroy()
 end)
 
--- Hover effect cho các nút
+-- ============================================================
+--                    GÁN SỰ KIỆN CHO NÚT THU NHỎ
+-- ============================================================
+MinBtn.MouseButton1Click:Connect(MinimizeMenu)
+CloseBtn.MouseButton1Click:Connect(MinimizeMenu)  -- giờ "X" cũng thu nhỏ
+
+-- Hover effect
 local function AddHoverEffect(button, color1, color2)
     button.MouseEnter:Connect(function()
         TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = color2}):Play()
@@ -513,4 +530,4 @@ Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     Container.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
 end)
 
-print("🚀 Blox Fruit Simple Hub v2.4 – có nút TMS thu nhỏ, kéo thả!")
+print("🚀 Blox Fruit Simple Hub v2.5 – Đã sửa lỗi đóng, có TMS!")
