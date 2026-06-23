@@ -1,6 +1,6 @@
 -- ============================================================
---                    BLOX FRUIT SIMPLE HUB v2.2
---                Auto Farm siêu nhanh + bay lên + gom quái
+--                    BLOX FRUIT SIMPLE HUB v2.4
+--                Thêm nút TMS thu nhỏ, kéo thả
 -- ============================================================
 
 -- Khai báo dịch vụ
@@ -20,7 +20,7 @@ if CoreGui:FindFirstChild("BloxFruitSimpleHub") then
 end
 
 -- ============================================================
---                    GIAO DIỆN (GIỮ NGUYÊN)
+--                    GIAO DIỆN CHÍNH
 -- ============================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BloxFruitSimpleHub"
@@ -67,7 +67,7 @@ local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "⚔ THUẬN MOD"
+TitleLabel.Text = "⚔ BLOX FRUIT HUB"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize = 18
 TitleLabel.Font = Enum.Font.GothamBold
@@ -150,6 +150,67 @@ local Layout = Instance.new("UIListLayout")
 Layout.Parent = Container
 Layout.SortOrder = Enum.SortOrder.LayoutOrder
 Layout.Padding = UDim.new(0, 8)
+
+-- ============================================================
+--                    NÚT THU NHỎ (TMS)
+-- ============================================================
+local ToggleMenuButton = Instance.new("Frame")
+ToggleMenuButton.Name = "ToggleMenuButton"
+ToggleMenuButton.Size = UDim2.new(0, 55, 0, 55)
+ToggleMenuButton.Position = UDim2.new(1, -65, 1, -65)
+ToggleMenuButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleMenuButton.BorderSizePixel = 0
+ToggleMenuButton.Visible = false
+ToggleMenuButton.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)  -- bo tròn hoàn toàn
+ToggleCorner.Parent = ToggleMenuButton
+
+local ToggleLabel = Instance.new("TextLabel")
+ToggleLabel.Size = UDim2.new(1, 0, 1, 0)
+ToggleLabel.BackgroundTransparency = 1
+ToggleLabel.Text = "TMS"
+ToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleLabel.TextSize = 18
+ToggleLabel.Font = Enum.Font.GothamBold
+ToggleLabel.Parent = ToggleMenuButton
+
+-- Cho phép kéo thả nút tròn
+local dragging = false
+local dragStart, startPos
+
+ToggleMenuButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleMenuButton.Position
+    end
+end)
+
+ToggleMenuButton.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        ToggleMenuButton.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+ToggleMenuButton.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Khi ấn nút tròn thì mở menu và ẩn nút
+ToggleMenuButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    ToggleMenuButton.Visible = false
+end)
 
 -- ============================================================
 --                    TRẠNG THÁI
@@ -307,13 +368,13 @@ local function FindNearestMob(mobName)
 end
 
 -- ============================================================
---                    AUTO FARM SIÊU NHANH + BAY LÊN
+--                    AUTO FARM – ĐÁNH LIÊN TỤC
 -- ============================================================
 CreateToggle("⚔ Auto Farm (siêu nhanh)", "AutoFarm", function(enabled)
     if enabled then
         spawn(function()
             while States.AutoFarm do
-                task.wait(0.05)  -- tần suất cực cao
+                task.wait(0.05)
                 pcall(function()
                     local level = LocalPlayer.Data.Level.Value
                     local mobName = GetMobForLevel(level)
@@ -321,21 +382,30 @@ CreateToggle("⚔ Auto Farm (siêu nhanh)", "AutoFarm", function(enabled)
                     if target and Character and Character:FindFirstChild("HumanoidRootPart") then
                         local root = Character.HumanoidRootPart
                         local targetPos = target.HumanoidRootPart.Position
-                        -- Bay lên cao 15 stud phía trên quái
-                        local flyPos = targetPos + Vector3.new(0, 15, 0)
-                        root.CFrame = CFrame.new(flyPos)
-                        -- Giữ nhân vật không bị rơi
+                        local flyPos = targetPos + Vector3.new(0, 2, 0)
+                        root.CFrame = CFrame.new(flyPos, targetPos)
                         root.Velocity = Vector3.new(0, 0, 0)
-                        -- Tấn công liên tục
+
                         local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool") or Character:FindFirstChildOfClass("Tool")
                         if tool then
                             Character.Humanoid:EquipTool(tool)
                             tool:Activate()
-                            -- Gọi remote nếu có (thường dùng để đánh nhanh hơn)
-                            local remote = ReplicatedStorage:FindFirstChild("Remote") or ReplicatedStorage:FindFirstChild("Attack")
-                            if remote then
-                                remote:FireServer()
-                            end
+                        end
+
+                        -- Gửi remote tấn công
+                        local remote = ReplicatedStorage:FindFirstChild("Remote")
+                        if remote then remote:FireServer("Attack") end
+
+                        local comm = ReplicatedStorage:FindFirstChild("CommF_")
+                        if comm then comm:InvokeServer("Attack") end
+
+                        local attackEvent = ReplicatedStorage:FindFirstChild("Attack")
+                        if attackEvent then attackEvent:FireServer() end
+
+                        local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+                        if remotes then
+                            local attack = remotes:FindFirstChild("Attack")
+                            if attack then attack:FireServer() end
                         end
                     end
                 end)
@@ -366,7 +436,7 @@ CreateToggle("📜 Auto Quest", "AutoQuest", function(enabled)
 end)
 
 -- ============================================================
---                    BRING MOBS + NÂNG LÊN CAO
+--                    BRING MOBS + NÂNG LÊN
 -- ============================================================
 CreateToggle("🧲 Gom Quái (nâng lên)", "BringMob", function(enabled)
     if enabled then
@@ -385,11 +455,9 @@ CreateToggle("🧲 Gom Quái (nâng lên)", "BringMob", function(enabled)
                         local basePos = firstMob.HumanoidRootPart.Position
                         for _, mob in pairs(workspace.Enemies:GetChildren()) do
                             if mob.Name == firstMob.Name and mob ~= firstMob and mob:FindFirstChild("HumanoidRootPart") then
-                                -- Kéo về vị trí con đầu và nâng lên 8 stud
                                 local newPos = basePos + Vector3.new(0, 8, 0)
                                 mob.HumanoidRootPart.CFrame = CFrame.new(newPos)
                                 mob.HumanoidRootPart.CanCollide = false
-                                -- Giữ quái không rơi
                                 mob.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
                             end
                         end
@@ -419,16 +487,16 @@ end)
 -- ============================================================
 --                    ĐÓNG / THU NHỎ
 -- ============================================================
-local function ToggleVisibility()
-    MainFrame.Visible = not MainFrame.Visible
-end
+MinBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    ToggleMenuButton.Visible = true
+end)
 
-MinBtn.MouseButton1Click:Connect(ToggleVisibility)
 CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Hover effect
+-- Hover effect cho các nút
 local function AddHoverEffect(button, color1, color2)
     button.MouseEnter:Connect(function()
         TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = color2}):Play()
@@ -445,4 +513,4 @@ Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     Container.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
 end)
 
-print("🚀 Blox Fruit Simple Hub v2.2 đã sẵn sàng!")
+print("🚀 Blox Fruit Simple Hub v2.4 – có nút TMS thu nhỏ, kéo thả!")
